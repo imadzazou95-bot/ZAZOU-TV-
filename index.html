@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدول مباريات اليوم - مباشر</title>
+    <style>
+        body {font-family: Tajawal, Arial; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: #fff; margin: 0; padding: 20px;}
+        h1 {text-align: center; color: #00ff9d; margin: 30px 0; font-size: 2.5rem;}
+        table {width: 95%; max-width: 900px; margin: 20px auto; border-collapse: collapse; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        th, td {padding: 18px; text-align: center; border-bottom: 1px solid #444;}
+        th {background: #1e3c72; font-size: 1.2rem;}
+        tr {background: #16222a;}
+        tr:hover {background: #1e3c72; transform: scale(1.02); transition: .3s;}
+        .loading {text-align: center; font-size: 1.5rem; color: #00ff9d;}
+        .footer {text-align: center; margin: 40px; color: #888; font-size: 0.9rem;}
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <h1>جدول مباريات اليوم</h1>
+    <div id="loading" class="loading">جاري تحميل المباريات...</div>
+
+    <table id="matchesTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>التاريخ</th>
+                <th>الوقت</th>
+                <th>المباراة</th>
+                <th>البطولة</th>
+                <th>الملعب</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="footer">تحديث تلقائي من API-Football</div>
+
+    <script>
+        const API_KEY = 'bebbbc3ed33a067e20d7d61466556062';
+        const today = new Date().toISOString().slice(0,10); // تاريخ اليوم تلقائي
+        const URL = `https://v3.football.api-sports.io/fixtures?date=${today}`;
+
+        fetch(URL, {
+            headers: {
+                'x-rapidapi-key': API_KEY,
+                'x-rapidapi-host': 'v3.football.api-sports.io'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').remove();
+            const tbody = document.querySelector('#matchesTable tbody');
+            document.getElementById('matchesTable').style.display = 'table';
+
+            if (data.response.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5">لا توجد مباريات اليوم</td></tr>`;
+                return;
+            }
+
+            data.response.forEach(m => {
+                const tr = tbody.insertRow();
+                const date = new Date(m.fixture.date);
+                tr.insertCell(0).textContent = date.toLocaleDateString('ar-EG');
+                tr.insertCell(1).textContent = date.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'});
+                tr.insertCell(2).innerHTML = `<b>${m.teams.home.name}</b> × <b>${m.teams.away.name}</b>`;
+                tr.insertCell(3).textContent = m.league.name;
+                tr.insertCell(4).textContent = m.fixture.venue.name || '-';
+            });
+        })
+        .catch(err => {
+            document.getElementById('loading').textContent = 'فيه مشكلة في الاتصال، جرب بعد شوية';
+            console.error(err);
+        });
+    </script>
+</body>
