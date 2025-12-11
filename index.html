@@ -3,75 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جدول مباريات اليوم - مباشر</title>
+    <title>ZAZOU TV - جدول المباريات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
     <style>
-        body {font-family: Tajawal, Arial; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: #fff; margin: 0; padding: 20px;}
-        h1 {text-align: center; color: #00ff9d; margin: 30px 0; font-size: 2.5rem;}
-        table {width: 95%; max-width: 900px; margin: 20px auto; border-collapse: collapse; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
-        th, td {padding: 18px; text-align: center; border-bottom: 1px solid #444;}
-        th {background: #1e3c72; font-size: 1.2rem;}
-        tr {background: #16222a;}
-        tr:hover {background: #1e3c72; transform: scale(1.02); transition: .3s;}
-        .loading {text-align: center; font-size: 1.5rem; color: #00ff9d;}
-        .footer {text-align: center; margin: 40px; color: #888; font-size: 0.9rem;}
+        body {font-family: 'Cairo', sans-serif; background: #000; color: #fff; margin:0; padding:20px; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);}
+        h1 {text-align:center; color:#00ff9d; font-size:2.5rem; margin:20px 0;}
+        table {width:95%; max-width:950px; margin:20px auto; border-collapse:collapse; box-shadow:0 0 30px rgba(0,255,150,0.3); border-radius:15px; overflow:hidden;}
+        th {background:#00ff9d; color:#000; padding:20px; font-size:1.4rem;}
+        td {padding:18px; text-align:center; background:#112; border-bottom:1px solid #334;}
+        tr:hover {background:#1a3a4d; transform:scale(1.01);}
+        .team {display:flex; align-items:center; justify-content:center; gap:12px; font-weight:bold; font-size:1.1rem;}
+        .team img {width:40px; height:40px; border-radius:50%; object-fit:contain; background:#fff; padding:3px;}
+        .league {font-weight:bold; color:#00ff9d; font-size:0.95rem;}
+        .important {background:#1e3c72 !important; border-left:5px solid #00ff9d;}
+        .loading {text-align:center; font-size:2rem; color:#00ff9d; margin:100px;}
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <h1>جدول مباريات اليوم</h1>
-    <div id="loading" class="loading">جاري تحميل المباريات...</div>
+<h1>جدول مباريات اليوم - ZAZOU TV</h1>
+<div id="loading" class="loading">جاري تحميل المباريات...</div>
 
-    <table id="matchesTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>التاريخ</th>
-                <th>الوقت</th>
-                <th>المباراة</th>
-                <th>البطولة</th>
-                <th>الملعب</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<table id="matchesTable" style="display:none;">
+    <thead>
+        <tr>
+            <th>الوقت</th>
+            <th width="45%">المباراة</th>
+            <th>البطولة</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
-    <div class="footer">تحديث تلقائي من API-Football</div>
+<script>
+    const API_KEY = 'bebbbc3ed33a067e20d7d61466556062';
+    const today = new Date().toISOString().slice(0,10);
+    const URL = `https://v3.football.api-sports.io/fixtures?date=${today}`;
 
-    <script>
-        const API_KEY = 'bebbbc3ed33a067e20d7d61466556062';
-        const today = new Date().toISOString().slice(0,10); // تاريخ اليوم تلقائي
-        const URL = `https://v3.football.api-sports.io/fixtures?date=${today}`;
+    // قائمة الدوريات المهمة (تظهر في الأول)
+    const topLeagues = [8, 2, 3, 4, 39, 45, 61, 78, 79, 88, 135, 140, 71]; // UCL, CL, EPL, La Liga, Serie A, Bundesliga, Ligue 1, etc.
+    const nationalTeams = [1, 10, 16]; // World Cup, AFCON, Euro
 
-        fetch(URL, {
-            headers: {
-                'x-rapidapi-key': API_KEY,
-                'x-rapidapi-host': 'v3.football.api-sports.io'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('loading').remove();
-            const tbody = document.querySelector('#matchesTable tbody');
-            document.getElementById('matchesTable').style.display = 'table';
+    fetch(URL, {
+        headers: {
+            'x-rapidapi-key': API_KEY,
+            'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('loading').remove();
+        const tbody = document.querySelector('#matchesTable tbody');
+        document.getElementById('matchesTable').style.display = 'table';
 
-            if (data.response.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5">لا توجد مباريات اليوم</td></tr>`;
-                return;
-            }
+        let matches = data.response;
 
-            data.response.forEach(m => {
-                const tr = tbody.insertRow();
-                const date = new Date(m.fixture.date);
-                tr.insertCell(0).textContent = date.toLocaleDateString('ar-EG');
-                tr.insertCell(1).textContent = date.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'});
-                tr.insertCell(2).innerHTML = `<b>${m.teams.home.name}</b> × <b>${m.teams.away.name}</b>`;
-                tr.insertCell(3).textContent = m.league.name;
-                tr.insertCell(4).textContent = m.fixture.venue.name || '-';
-            });
-        })
-        .catch(err => {
-            document.getElementById('loading').textContent = 'فيه مشكلة في الاتصال، جرب بعد شوية';
-            console.error(err);
+        // ترتيب ذكي: دوريات كبيرة + منتخبات فوق
+        matches.sort((a, b) => {
+            const aImportant = topLeagues.includes(a.league.id) || nationalTeams.includes(a.league.id) ? 0 : 1;
+            const bImportant = topLeagues.includes(b.league.id) || nationalTeams.includes(b.league.id) ? 0 : 1;
+            if (aImportant !== bImportant) return aImportant - bImportant;
+            return a.fixture.timestamp - b.fixture.timestamp;
         });
-    </script>
+
+        if (matches.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3">لا توجد مباريات اليوم</td></tr>`;
+            return;
+        }
+
+        matches.forEach(m => {
+            const tr = tbody.insertRow();
+            if (topLeagues.includes(m.league.id) || nationalTeams.includes(m.league.id)) {
+                tr.classList.add('important');
+            }
+
+            const date = new Date(m.fixture.date);
+            const time = date.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}); // أرقام إنجليزي
+
+            tr.insertCell(0).textContent = time;
+
+            tr.insertCell(1).innerHTML = `
+                <div class="team">
+                    <img src="${m.teams.home.logo}" alt="${m.teams.home.name}">
+                    <span>${m.teams.home.name}</span>
+                    <span style="margin:0 10px; color:#00ff9d;">×</span>
+                    <span>${m.teams.away.name}</span>
+                    <img src="${m.teams.away.logo}" alt="${m.teams.away.name}">
+                </div>`;
+
+            tr.insertCell(2).innerHTML = `<span class="league">${m.league.name}</span><br><small>${m.league.country}</small>`;
+        });
+    })
+    .catch(() => {
+        document.getElementById('loading').textContent = 'فيه مشكلة في النت، جرب تاني';
+    });
+</script>
 </body>
+</html>
