@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -53,7 +54,6 @@
         document.getElementById('loading').style.display = 'block';
 
         fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
-            {
             headers: {
                 'x-rapidapi-key': API_KEY,
                 'x-rapidapi-host': 'v3.football.api-sports.io'
@@ -63,7 +63,7 @@
         .then(data => {
             document.getElementById('loading').style.display = 'none';
             const container = document.getElementById('matches');
-
+            
             const priority = [8,2,3,4,39,45,61,78,79,88,135,140,71,1,10,16];
             data.response.sort((a,b) => {
                 const pa = priority.includes(a.league.id) ? 0 : 1;
@@ -104,7 +104,6 @@
         });
     }
 
-    // تحميل مباريات اليوم تلقائيًا عند فتح الصفحة
     loadMatches(0);
 </script>
 </body>
